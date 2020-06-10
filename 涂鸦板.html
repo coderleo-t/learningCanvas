@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+    text-align: center;
+    }
+
+    canvas {
+      box-shadow: 0px 0px 50px lightgray;
+      cursor: crosshair;
+    }
+
+    .clear{
+      width: 80px;
+      height: 30px;
+      position: absolute;
+      left: 260px;
+      top: 100px;
+      background-color: lightgray;
+      cursor:grab;
+    }
+
+    .clean {
+      width: 80px;
+      height: 30px;
+      position: absolute;
+      left: 170px;
+      top: 100px;
+      background-color:aqua;
+      cursor: pointer;;
+    }
+
+    #selects {
+      position: absolute;
+      top: 160px;
+      left: 175px;
+    }
+    #selects>span {
+      font-weight: 1000;
+    }
+    #selects>input {
+      margin: 6px 10px;
+    }
+    .selectColor {
+      position: absolute;
+      top: 260px;
+      left: 175px;
+      display: flex;
+    }
+    .selectColor>span {
+      font-weight: 1000;
+    }
+    .colorBlock {
+      width: 30px;
+      height: 30px;
+      margin-left: 10px;
+      background-color: black;
+      box-shadow: 1px 1px 10px black;
+      cursor: pointer;
+    }
+    .colors {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      left: -150px;
+      background-color: white;
+      box-shadow: 0px 0px 4px lightgray;
+      display: none;
+      overflow: auto;
+    }
+    .row1 {
+      width: 50px;
+      height: 20px;
+      display: absolute;
+    }
+    .paintBlock {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .row {
+      width: 30px;
+      height: 30px;
+      margin: 3px 5px;
+      background-color: wheat;
+    }
+
+  </style>
+</head>
+
+<body onload="painting()">
+
+  <canvas id="canvas" width="800" height="700">
+    您的浏览器尚不兼容
+  </canvas>
+  <button class="clean" onmousedown='cleanAll()'>清屏</button>
+
+  <button class="clear" onmousedown='select()' >橡皮擦</button>
+
+  <form id="selects">
+    <span>字体大小:</span>
+    <input  value="10" style="width: 30px;" maxlength="3" disabled onblur="alterFont(1)"/>
+    <button type="button" onclick="alterFont(2)">修改</button><br />
+
+    <span>橡皮大小:</span>
+    <input value="10" style="width: 30px;" maxlength="3" disabled onblur="alterFont(3)" />
+    <button type="button" onclick="alterFont(4)">修改</button><br />
+  </form>
+  
+  <div class="selectColor">
+    <span>选择颜色:</span>
+    <div class="colorBlock" onclick="showChangeColor()"></div>
+
+    <div class="colors">
+      <button class="row1" onclick="hiddenColors()"> 隐藏</button>
+
+      <div class="paintBlock">
+        <div class="row"></div>
+      </div>
+    </div>
+  </div>
+  
+  
+
+
+  <script>
+    // 变量
+    let isSelect = false
+    const canvas = document.getElementById('canvas')
+    const colors = document.querySelector('.colors')
+    let paintObj = null
+    let painterColor = 'black'
+    let painterWidth = 5
+    let eraserWidth = 5
+    let isPainting = true
+    let showColors = false
+    let colorsBlockCount = 100
+
+
+    // 显示改变颜色
+    function showChangeColor() {
+      let i = 0
+      colors.style.display = 'block'
+      showColors = true
+      let colorBlocks = document.querySelector('.paintBlock')
+      let node = document.querySelector('.paintBlock>div')
+      
+      while(i < colorsBlockCount) {
+        let cloneNode = node.cloneNode(true)
+        cloneNode.style.width = 30 + 'px'
+        cloneNode.style.height = 30 + 'px'
+        let r = Math.round((Math.random() * 255)).toString(16);
+        let g = Math.round((Math.random() * 255)).toString(16);
+        let b = Math.round((Math.random() * 255)).toString(16);
+        let color = "#" + r + g + b;
+        cloneNode.style.backgroundColor = color
+        colorBlocks.appendChild(cloneNode)
+        i++
+      }
+
+      let nodes = document.querySelectorAll('.paintBlock>div')
+      let block = document.querySelector('.colorBlock')
+      nodes.forEach((item, index) => {
+        item.onclick = () => {
+          if(item.style.backgroundColor === '') {
+            painterColor = 'wheat'
+            block.style.backgroundColor = 'wheat'
+            block.style.boxShadow = '1px 1px 10px wheat'
+            colors.style.display = 'none'
+          } else {
+            painterColor = item.style.backgroundColor
+            block.style.backgroundColor = item.style.backgroundColor
+            block.style.boxShadow = `1px 1px 10px ${item.style.backgroundColor}`
+            colors.style.display = 'none'
+          }
+        }
+      })
+    }
+
+    function hiddenColors() {
+      colors.style.display = 'none'
+    }
+      
+    // 改变字体大小
+    function alterFont(value) {
+      const inp1 = document.querySelectorAll('#selects>input')[0]
+      const inp2 = document.querySelectorAll('#selects>input')[1]
+      if(value === 2) {
+        inp1.disabled = false
+        inp1.focus()
+      }
+      if (value === 1) {
+        painterWidth = inp1.value
+        inp1.disabled = true
+      }
+      if (value === 4) {
+        inp2.disabled = false
+        inp2.focus()
+      }
+      if (value === 3) {
+        eraserWidth = inp2.value
+        inp2.disabled = true
+      }
+    }
+
+    // 橡皮檫操作
+    function select() {
+      const select = document.querySelector('.clear')
+      if(!isSelect) {
+        select.style.backgroundColor = 'lightsalmon'
+        canvas.style['cursor'] = 'cell'
+        isSelect = true
+        isPainting = false
+      } else {
+        select.style.backgroundColor = 'lightgray'
+        canvas.style['cursor'] = 'crosshair'
+        isSelect = false
+        isPainting = true
+      }
+    }
+
+  function cleanAll() {
+    paintObj.clearRect(0, 0, canvas.width, canvas.height)
+  }
+    
+  // 主画板
+  function painting() {
+    if(canvas.getContext) {
+      const gra = canvas.getContext('2d')
+      paintObj = gra
+      gra.lineWidth = painterWidth
+      canvas.onmousedown = (e) => {
+        e = e || window.event
+
+        if (isPainting) {
+          gra.strokeStyle = painterColor
+          gra.lineWidth = painterWidth
+          gra.globalCompositeOperation = 'source-over'
+        } else {
+          gra.strokeStyle = painterColor
+          gra.lineWidth = eraserWidth
+          gra.globalCompositeOperation = 'destination-out'
+        }
+
+        let stratPointx = e.clientX - canvas.offsetLeft + document.documentElement.scrollLeft
+        let stratPointy = e.clientY - canvas.offsetTop + document.documentElement.scrollTop
+        gra.beginPath()
+        gra.moveTo(stratPointx, stratPointy)
+
+        canvas.onmousemove = (e) => {
+          e = e || window.event
+          gra.lineTo(e.clientX - canvas.offsetLeft + document.documentElement.scrollLeft
+          , e.clientY - canvas.offsetTop + document.documentElement.scrollTop)
+          gra.stroke()
+
+          document.onmouseup = (e) => {
+            canvas.onmousemove = null
+          }
+        }
+      }
+    }
+  }
+  </script>
+</body>
+
+</html>
